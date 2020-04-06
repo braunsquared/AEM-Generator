@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as mkdirp from 'mkdirp';
 import * as path from 'path';
 import { AEMTouchUIDialog, PlaceHolder } from './models';
 import { UiGenerator } from './uiGenerator';
@@ -24,14 +25,8 @@ export class TouchUIXMLGenerator extends UiGenerator {
       : template.tracking
           .replace(PlaceHolder.Title, this.dialogConfig.componentName)
           .replace(PlaceHolder.Group, this.dialogConfig.componentGroup)
-          .replace(
-            PlaceHolder.TrackingEvents,
-            this.getAnalyticsElements('events')
-          )
-          .replace(
-            PlaceHolder.TrackingVars,
-            this.getAnalyticsElements('values')
-          )
+          .replace(PlaceHolder.TrackingEvents, this.getAnalyticsElements('events'))
+          .replace(PlaceHolder.TrackingVars, this.getAnalyticsElements('values'))
           .replace(PlaceHolder.Group, this.dialogConfig.componentGroup);
   }
 
@@ -44,35 +39,14 @@ export class TouchUIXMLGenerator extends UiGenerator {
   public getAEMConfig() {
     template.component = !this.dialogConfig.resourceSuperType
       ? template.component.replace(PlaceHolder.ResourceSuperType, '')
-      : (template.component = template.component.replace(
-          PlaceHolder.ResourceSuperType,
-          'sling:resourceSuperType="' +
-            this.dialogConfig.resourceSuperType +
-            '"'
-        ));
+      : (template.component = template.component.replace(PlaceHolder.ResourceSuperType, 'sling:resourceSuperType="' + this.dialogConfig.resourceSuperType + '"'));
 
     return template.component
       .replace(PlaceHolder.Title, this.dialogConfig.componentName)
       .replace(PlaceHolder.Group, this.dialogConfig.componentGroup)
-      .replace(
-        PlaceHolder.ComponentDescription,
-        this.dialogConfig.componentDescription
-      )
-      .replace(
-        PlaceHolder.NoDecoration,
-        '{Boolean}' +
-          String(
-            this.dialogConfig.noDecoration
-              ? this.dialogConfig.noDecoration
-              : false
-          )
-      )
-      .replace(
-        PlaceHolder.IsContainer,
-        String(
-          this.dialogConfig.isContainer ? this.dialogConfig.isContainer : false
-        )
-      );
+      .replace(PlaceHolder.ComponentDescription, this.dialogConfig.componentDescription)
+      .replace(PlaceHolder.NoDecoration, '{Boolean}' + String(this.dialogConfig.noDecoration ? this.dialogConfig.noDecoration : false))
+      .replace(PlaceHolder.IsContainer, String(this.dialogConfig.isContainer ? this.dialogConfig.isContainer : false));
   }
 
   /**
@@ -137,24 +111,15 @@ export class TouchUIXMLGenerator extends UiGenerator {
    * @param {string} folderPath
    */
   public makeFolder(folderPath: string) {
-    // first folder
-    let currentFolder = path.resolve(folderPath.split('/')[0]);
-    // create folder if it does not exist
-    folderPath.split('/').forEach(folder => {
-      currentFolder += '/' + folder;
-      if (!fs.existsSync(path.resolve(currentFolder))) {
-        fs.mkdirSync(path.resolve(currentFolder));
-      }
-    });
+    mkdirp.sync(folderPath);
   }
+
   /**
    * writeDialog() create the /_cq_dialog/.content.xml file and
    * calls getDialog() to replace the placeholders in the dialog-template
    */
   public writeDialog() {
-    const filePath = path.resolve(
-      this.dialogConfig.componentPath + '/_cq_dialog/.content.xml'
-    );
+    const filePath = path.resolve(this.dialogConfig.componentPath + '/_cq_dialog/.content.xml');
     fs.writeFileSync(path.resolve(filePath), this.getDialog());
     console.info('AEM Touch UI Dialog built: ' + filePath);
   }
@@ -163,9 +128,7 @@ export class TouchUIXMLGenerator extends UiGenerator {
    * calls getHtmlTag() to replace the placeholders in the htmlTag-template
    */
   public writeHtmlTag() {
-    const filePath = path.resolve(
-      this.dialogConfig.componentPath + '/_cq_htmlTag/.content.xml'
-    );
+    const filePath = path.resolve(this.dialogConfig.componentPath + '/_cq_htmlTag/.content.xml');
     fs.writeFileSync(path.resolve(filePath), this.getHtmlTag());
     console.info('AEM Touch UI HTML-Tag built: ' + filePath);
   }
@@ -175,9 +138,7 @@ export class TouchUIXMLGenerator extends UiGenerator {
    *  calls getAnalytics() to replace the placeholders in the analytics-template
    */
   public writeAnalytics() {
-    const filePath = path.resolve(
-      this.dialogConfig.componentPath + '/analytics/.content.xml'
-    );
+    const filePath = path.resolve(this.dialogConfig.componentPath + '/analytics/.content.xml');
     fs.writeFileSync(path.resolve(filePath), this.getAnalytics());
     console.info('AEM Analtics XML built: ' + filePath);
   }
@@ -187,9 +148,7 @@ export class TouchUIXMLGenerator extends UiGenerator {
    * and calls getAEMConfig() to replace the placeholders in the AEMConfig-template
    */
   public writeAEMConfig() {
-    const filePath = path.resolve(
-      this.dialogConfig.componentPath + '/.content.xml'
-    );
+    const filePath = path.resolve(this.dialogConfig.componentPath + '/.content.xml');
     fs.writeFileSync(path.resolve(filePath), this.getAEMConfig());
     console.info('AEM Config XML built: ' + filePath);
   }
@@ -199,9 +158,7 @@ export class TouchUIXMLGenerator extends UiGenerator {
    * and replaces the placesholders in the CqConfig-template
    */
   public writeCqConfig() {
-    const filePath = path.resolve(
-      this.dialogConfig.componentPath + '/_cq_editConfig.xml'
-    );
+    const filePath = path.resolve(this.dialogConfig.componentPath + '/_cq_editConfig.xml');
     fs.writeFileSync(path.resolve(filePath), this.getCqConfig());
     console.info('AEM Cq Edit Config XML built: ' + filePath);
   }
@@ -212,9 +169,7 @@ export class TouchUIXMLGenerator extends UiGenerator {
    *  file in the file system
    */
   public writeCqDesignDialog() {
-    const filePath = path.resolve(
-      this.dialogConfig.componentPath + '/_cq_design_dialog/.content.xml'
-    );
+    const filePath = path.resolve(this.dialogConfig.componentPath + '/_cq_design_dialog/.content.xml');
     fs.writeFileSync(path.resolve(filePath), this.getCqDesignDialog());
     console.info('AEM Cq Design Dialog Config XML built: ' + filePath);
   }
@@ -224,13 +179,9 @@ export class TouchUIXMLGenerator extends UiGenerator {
    * relaces the placeholders in the html-template file
    */
   public writeSightlyTemplate() {
-    const file = this.dialogConfig.componentPath.split('/')[
-      this.dialogConfig.componentPath.split('/').length - 1
-    ];
+    const file = this.dialogConfig.componentPath.split('/')[this.dialogConfig.componentPath.split('/').length - 1];
 
-    const filePath = path.resolve(
-      this.dialogConfig.componentPath + '/' + file + '.html'
-    );
+    const filePath = path.resolve(this.dialogConfig.componentPath + '/' + file + '.html');
     fs.writeFileSync(path.resolve(filePath), this.getSightlyTemplate());
     console.info('REACT Template built: ' + filePath);
   }
